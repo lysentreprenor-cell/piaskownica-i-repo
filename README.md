@@ -1,33 +1,36 @@
-# Piaskownica i repo — poligon dla SimplyChat
+# Narzędziownia SimplyChat
 
-Repozytorium do **ćwiczeń i testów Code Power** w SimplyChat. Tu agent może czytać kod,
-zmieniać go, uruchamiać piaskownicę, otwierać pull requesty i budować — a pomyłka nie
-dotyka żadnego prawdziwego projektu (SimplyChat, Gadacz itd.).
+Narzędzia, które SimplyChat uruchamia, gdy w rozmowie potrzebuje czegoś, czego jego serwer nie
+umie albo nie powinien robić (serwer celowo nie ma powłoki — trzyma klucze i bazę).
+Każde narzędzie działa na **GitHub Actions w tym repo**. Repo jest **publiczne**, więc przebiegi
+są **darmowe i bez limitu minut**.
 
-## Co tu jest
+## Narzędzia
 
-| Plik | Po co |
-|---|---|
-| `src/tekst.ts` | Mały moduł (slug, licznik słów, skracanie) — materiał do zadań typu „dodaj funkcję”, „popraw błąd” |
-| `test/tekst.test.ts` | Testy (`node:test` przez `tsx`) |
-| `.github/workflows/agent-sandbox.yml` | Piaskownica przez GitHub Actions — ta sama co w SimplyChat, wywoływana przez `run_sandbox` |
-| `.github/workflows/ci.yml` | CI na każdym PR i pushu na `main` |
+| Nazwa | Dane | Wynik |
+|---|---|---|
+| `python` | kod Pythona | wyjście programu (do 20 000 znaków, limit 120 s) |
+| `strona` | adres http(s) | tytuł i widoczny tekst strony po wyrenderowaniu JavaScriptu |
 
-Skrypty: `npm run check` (tsc), `npm test`, `npm run build` — dokładnie te, które uruchamia
-piaskownica (E2B albo Actions).
+Workflow: `.github/workflows/narzedzie.yml` (wejścia `narzedzie`, `dane`, `zlecenie`).
+Wynik jest w logu kroku „oddaj wynik” między `===WYNIK===` a `===KONIEC===`, jako JSON
+`{ "ok": true|false, "wynik": "..." }` — zaszyfrowany, gdy jest klucz.
 
-## Jak użyć z SimplyChat
+## Prywatność — ważne
 
-1. W ustawieniach GitHub App SimplyChat dodaj to repozytorium do instalacji
-   (uprawnienia: Contents R/W, Pull requests R/W, **Actions: Write** — dla piaskownicy przez Actions).
-2. W SimplyChat wybierz repozytorium `piaskownica-i-repo` i tryb Code Power.
-3. Daj zadanie, np. „dodaj funkcję `odwroc(tekst)` z testem”. Agent zrobi zmianę,
-   puści piaskownicę, otworzy PR.
+Repo jest publiczne: **logi przebiegów i wejścia workflow widzi każdy**. Dlatego:
 
-Z kluczem `E2B_API_KEY` na serwerze SimplyChat piaskownica idzie przez E2B (sekundy),
-bez niego przez `agent-sandbox.yml` (minuty).
+1. Wygeneruj klucz (64 znaki hex), np. `openssl rand -hex 32`.
+2. Dodaj go jako sekret repo: Settings → Secrets and variables → Actions → New repository secret,
+   nazwa `NARZEDZIOWNIA_KLUCZ`.
+3. Ten sam klucz dodaj w sekretach SimplyChat (Replit) pod tą samą nazwą.
 
-## Zasady
+Z kluczem dane i wyniki są szyfrowane AES-256-GCM (`narzedzia/szyfr.mjs`). **Bez klucza
+wszystko idzie jawnie i jest publiczne** — tak wolno tylko przy ręcznych próbach.
 
-- Nic tu nie jest produkcją — PR-y agenta można scalać i zamykać bez żalu.
-- Bez sekretów w kodzie. Workflow piaskownicy ma tylko `contents: read`.
+## Dodanie narzędzia
+
+1. Skrypt `narzedzia/<nazwa>.mjs`: czyta plik danych (`process.argv[2]`), wypisuje JSON
+   `{ok, wynik}`, zawsze kończy się kodem 0.
+2. Nazwa do listy `options` i krok `if: inputs.narzedzie == '<nazwa>'` w `narzedzie.yml`.
+3. Test w `narzedzia/narzedzia.test.mjs`, `npm test`.

@@ -1,0 +1,67 @@
+# Narzędziownia SimplyChat: jedno narzędzie na przebieg, za darmo (repo publiczne).
+#
+# Bezpieczeństwo:
+# - `narzedzie` to zamknięta lista (choice), `dane` idą przez env do pliku — nigdy do `run:`;
+# - repo jest publiczne, więc dane i wynik są szyfrowane kluczem NARZEDZIOWNIA_KLUCZ
+#   (narzedzia/szyfr.mjs); klucz widzą tylko kroki „odbierz” i „oddaj”, nie kod narzędzia;
+# - wynik w logu między znacznikami ===WYNIK=== / ===KONIEC===, SimplyChat odczytuje go z logów.
+name: Narzędzie
+run-name: ${{ inputs.narzedzie }} ${{ inputs.zlecenie }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      narzedzie:
+        description: Które narzędzie
+        type: choice
+        required: true
+        options: [python, strona]
+      dane:
+        description: Dane (najlepiej zaszyfrowane, „enc:...”)
+        type: string
+        required: true
+      zlecenie:
+        description: Identyfikator zlecenia — po nim SimplyChat znajduje swój przebieg
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: odbierz dane
+        env:
+          DANE: ${{ inputs.dane }}
+          KLUCZ: ${{ secrets.NARZEDZIOWNIA_KLUCZ }}
+        run: node narzedzia/szyfr.mjs odszyfruj > "$RUNNER_TEMP/dane"
+
+      - name: python
+        if: inputs.narzedzie == 'python'
+        run: node narzedzia/python.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik"
+
+      - name: przeglądarka (dla „strona”)
+        if: inputs.narzedzie == 'strona'
+        run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium > /dev/null
+
+      - name: strona
+        if: inputs.narzedzie == 'strona'
+        run: node narzedzia/strona.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik" 2> /dev/null
+
+      - name: oddaj wynik
+        if: always()
+        env:
+          KLUCZ: ${{ secrets.NARZEDZIOWNIA_KLUCZ }}
+        run: |
+          [ -s "$RUNNER_TEMP/wynik" ] || echo '{"ok":false,"wynik":"Narzędzie nie zwróciło wyniku (sprawdź wcześniejsze kroki)."}' > "$RUNNER_TEMP/wynik"
+          echo "===WYNIK==="
+          node narzedzia/szyfr.mjs zaszyfruj < "$RUNNER_TEMP/wynik"
+          echo
+          echo "===KONIEC==="

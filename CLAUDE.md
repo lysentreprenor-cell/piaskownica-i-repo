@@ -1,5 +1,9 @@
-# Piaskownica i repo
+# Narzędziownia SimplyChat (repo `piaskownica-i-repo`)
 
-Poligon dla Code Power z SimplyChat. Nie jest produkcją. Przed pushem: `npm run check && npm test && npm run build`.
-Nie zmieniaj listy poleceń w `agent-sandbox.yml` (check/test/build/all) — SimplyChat na niej polega.
-Odpowiedzi po polsku.
+Repo PUBLICZNE (darmowe Actions). Narzędzia w `narzedzia/*.mjs`, uruchamiane przez
+`.github/workflows/narzedzie.yml`. Szczegóły i dodawanie narzędzi: README.md.
+
+- Nigdy nie wypisuj do logu danych ani wyniku jawnie — tylko przez `szyfr.mjs zaszyfruj`.
+- Klucz `NARZEDZIOWNIA_KLUCZ` tylko w krokach „odbierz” i „oddaj”, nigdy w kroku narzędzia.
+- `dane` nigdy w `run:` — tylko przez env/plik.
+- Przed pushem: `npm test`. Odpowiedzi po polsku.
