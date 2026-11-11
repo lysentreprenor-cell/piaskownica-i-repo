@@ -1,0 +1,27 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      # Ten sam klucz co w agent-sandbox.yml: cache z main widzą gałęzie simplychat-sandbox/*.
+      - name: cache node_modules
+        id: modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: sandbox-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+      - name: npm ci
+        if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
