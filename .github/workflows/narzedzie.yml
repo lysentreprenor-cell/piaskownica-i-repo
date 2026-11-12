@@ -42,7 +42,9 @@ jobs:
       - name: użytkownik bez uprawnień
         run: |
           sudo useradd -m tester
-          sudo mkdir -p /tmp/narzedzia && sudo chmod 755 /tmp/narzedzia
+          # Katalog należy do użytkownika przebiegu (zapisuje dane), a skrypty oddają go
+          # testerowi dopiero przed uruchomieniem obcego kodu. Własność roota = EACCES (12.11.2026).
+          sudo mkdir -p /tmp/narzedzia && sudo chown "$(id -u):$(id -g)" /tmp/narzedzia && chmod 755 /tmp/narzedzia
           echo "NARZEDZIA_TESTER=1" >> "$GITHUB_ENV"
 
       - name: odbierz dane
