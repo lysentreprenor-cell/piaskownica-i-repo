@@ -11,6 +11,10 @@ są **darmowe i bez limitu minut**.
 |---|---|---|
 | `python` | kod Pythona | wyjście programu (do 20 000 znaków, limit 120 s) |
 | `strona` | adres http(s) | tytuł i widoczny tekst strony po wyrenderowaniu JavaScriptu |
+| `testy` | JSON `{repo, ref, token, command}` | darmowa piaskownica: klon repo (token tylko do odczytu), `npm ci`, check/test/build, ogony logów |
+
+Obcy kod (Python, testy cudzego repo) działa jako użytkownik `tester` bez sudo i bez zapisu do
+katalogu roboczego, więc nie dosięgnie klucza używanego w kroku „oddaj wynik”.
 
 Workflow: `.github/workflows/narzedzie.yml` (wejścia `narzedzie`, `dane`, `zlecenie`).
 Wynik jest w logu kroku „oddaj wynik” między `===WYNIK===` a `===KONIEC===`, jako JSON

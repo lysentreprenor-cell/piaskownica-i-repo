@@ -15,7 +15,7 @@ on:
         description: Które narzędzie
         type: choice
         required: true
-        options: [python, strona]
+        options: [python, strona, testy]
       dane:
         description: Dane (najlepiej zaszyfrowane, „enc:...”)
         type: string
@@ -31,11 +31,19 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
+
+      # Obcy kod (python, testy cudzego repo) idzie jako `tester` bez sudo i bez zapisu do
+      # katalogu roboczego — inaczej mógłby podmienić szyfr.mjs, którego krok „oddaj” używa z kluczem.
+      - name: użytkownik bez uprawnień
+        run: |
+          sudo useradd -m tester
+          sudo mkdir -p /tmp/narzedzia && sudo chmod 755 /tmp/narzedzia
+          echo "NARZEDZIA_TESTER=1" >> "$GITHUB_ENV"
 
       - name: odbierz dane
         env:
@@ -55,11 +63,16 @@ jobs:
         if: inputs.narzedzie == 'strona'
         run: node narzedzia/strona.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik" 2> /dev/null
 
+      - name: testy (piaskownica cudzego repo)
+        if: inputs.narzedzie == 'testy'
+        run: node narzedzia/testy.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik" 2> /dev/null
+
       - name: oddaj wynik
         if: always()
         env:
           KLUCZ: ${{ secrets.NARZEDZIOWNIA_KLUCZ }}
         run: |
+          sudo pkill -9 -u tester || true
           [ -s "$RUNNER_TEMP/wynik" ] || echo '{"ok":false,"wynik":"Narzędzie nie zwróciło wyniku (sprawdź wcześniejsze kroki)."}' > "$RUNNER_TEMP/wynik"
           echo "===WYNIK==="
           node narzedzia/szyfr.mjs zaszyfruj < "$RUNNER_TEMP/wynik"
