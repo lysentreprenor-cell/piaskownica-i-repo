@@ -15,7 +15,7 @@ on:
         description: Które narzędzie
         type: choice
         required: true
-        options: [python, strona, testy]
+        options: [python, strona, testy, sesja]
       dane:
         description: Dane (najlepiej zaszyfrowane, „enc:...”)
         type: string
@@ -31,7 +31,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,6 +68,11 @@ jobs:
       - name: testy (piaskownica cudzego repo)
         if: inputs.narzedzie == 'testy'
         run: node narzedzia/testy.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik" 2> /dev/null
+
+      # Sesja: jedna maszyna na całe zadanie, polecenia z serwera SimplyChat (narzedzia/sesja.mjs).
+      - name: sesja
+        if: inputs.narzedzie == 'sesja'
+        run: node narzedzia/sesja.mjs "$RUNNER_TEMP/dane" > "$RUNNER_TEMP/wynik" 2> /dev/null
 
       - name: oddaj wynik
         if: always()

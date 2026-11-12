@@ -60,3 +60,23 @@ test("ogon", () => {
   assert.equal(ogon("abc", 5), "abc");
   assert.equal(ogon("abcdef", 2), "[…]\nef");
 });
+
+import { sprawdzSesje, bezpiecznaSciezka } from "./sesja.mjs";
+
+test("sesja: sprawdzSesje odrzuca złe adresy i wstrzyknięcia", () => {
+  const ok = { repo: "o/r", ref: "simplychat-sandbox/x", token: "ghs_" + "a".repeat(36), url: "https://app.replit.app", sessionId: "s-abcdef12", sessionToken: "ab".repeat(24) };
+  assert.equal(sprawdzSesje(ok).url, "https://app.replit.app");
+  assert.throws(() => sprawdzSesje({ ...ok, url: "http://app.replit.app" }));
+  assert.throws(() => sprawdzSesje({ ...ok, url: "https://evil.com/x?y" }));
+  assert.throws(() => sprawdzSesje({ ...ok, sessionId: "../x" }));
+  assert.throws(() => sprawdzSesje({ ...ok, sessionToken: "zly" }));
+});
+
+test("sesja: ścieżki plików tylko względne, bez .. i .git", () => {
+  assert.equal(bezpiecznaSciezka("src/a.ts"), "src/a.ts");
+  assert.equal(bezpiecznaSciezka("./src/a.ts"), "src/a.ts");
+  assert.equal(bezpiecznaSciezka("../x"), undefined);
+  assert.equal(bezpiecznaSciezka("/etc/passwd"), undefined);
+  assert.equal(bezpiecznaSciezka(".git/config"), undefined);
+  assert.equal(bezpiecznaSciezka("a/../../b"), undefined);
+});

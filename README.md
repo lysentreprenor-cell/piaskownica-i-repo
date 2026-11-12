@@ -11,6 +11,7 @@ są **darmowe i bez limitu minut**.
 |---|---|---|
 | `python` | kod Pythona | wyjście programu (do 20 000 znaków, limit 120 s) |
 | `strona` | adres http(s) | tytuł i widoczny tekst strony po wyrenderowaniu JavaScriptu |
+| `sesja` | JSON `{repo, ref, token, url, sessionId, sessionToken}` | jedna maszyna na całe zadanie: repo i zależności raz, potem polecenia z serwera SimplyChat w sekundach; `tester` bez sieci po instalacji |
 | `testy` | JSON `{repo, ref, token, command}` | darmowa piaskownica: klon repo (token tylko do odczytu), `npm ci`, check/test/build, ogony logów |
 
 Obcy kod (Python, testy cudzego repo) działa jako użytkownik `tester` bez sudo i bez zapisu do
